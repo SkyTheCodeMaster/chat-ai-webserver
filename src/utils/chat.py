@@ -47,7 +47,7 @@ def setup_chat(conversation: list[dict[str, str]]) -> list[dict[str, str]]:
 def generate_text(
   _conversation: list[dict[str, str]],
   *,
-  max_new_tokens: int = 500,
+  max_new_tokens: int = 100,
   temperature: float = 0.6,
   top_p: float = 0.92,
   do_sample: bool = True,
