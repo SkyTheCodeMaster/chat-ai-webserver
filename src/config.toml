@@ -5,6 +5,11 @@ devmode = false
   url = "postgresql://user@ip:port/db_name"
   password = "secure_password"
 
+[ai]
+  # Comes from huggingface
+  model = "HuggingFaceTB/SmolLM-1.7B-Instruct"
+  device = "cuda"
+
 [log]
   file = ""
 
