@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import tomllib
-import re
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 from typing import TYPE_CHECKING
 
 import time
+from .output import get_processor
 
 if TYPE_CHECKING:
   pass
@@ -15,9 +15,7 @@ if TYPE_CHECKING:
 with open("config.toml") as f:
   config = tomllib.loads(f.read())
 
-OUTPUT_PATTERN = re.compile(
-  r"<\|im_start\|>(.*?)<\|im_end\|>", re.MULTILINE | re.DOTALL
-)
+
 MODEL_ID = config["ai"]["model"]
 DEVICE = config["ai"]["device"]
 MODEL_LOCK = asyncio.Lock()
@@ -25,6 +23,7 @@ MODEL_LOCK = asyncio.Lock()
 DEFAULT_TEMP = 0.4
 DEFAULT_TOP_P = 0.92
 DEFAULT_START_PROMPT = "You are a helpful assistant, with a focus on talking to people about relevant topics in the conversation."
+OUTPUT_PROCESSOR = get_processor(MODEL_ID)
 
 
 if not torch.cuda.is_available() and "cuda" in DEVICE:
@@ -74,36 +73,7 @@ def generate_text(
   return output_text
 
 
-def process_output(output_text: str) -> dict:
-  """
-  Input:
-  <|im_start|>system\nYou are a friendly chatbot.<|im_end|>\n<|im_start|>user\nSkyCrafter0: Hello there! What is my name?<|im_end|>\n<|im_start|>assistant\nYour name is SkyCrafter0.<|im_end|>
 
-  Steps:
-  extract data between <|im_start|> and <|im_end|>
-  first line is the "role", everything else is content
-  take last content as "response"
-  Outputs something like:
-  {
-    "response": "latest response here",
-    "conversation": [
-      {"role":"assistant","content":"message"}
-    ]
-  }"""
-  matches: list[str] = OUTPUT_PATTERN.findall(output_text)
-  if not matches:
-    raise Exception("No output data found!")
-
-  conversation = []
-  for match in matches:
-    split = match.split("\n")
-    role = split.pop(0)
-    content = "\n".join(split)
-    conversation.append({"role": role, "content": content})
-
-  response = conversation[-1]["content"]
-  output_response = {"response": response, "conversation": conversation}
-  return output_response
 
 
 async def generate_full_text(
@@ -127,6 +97,6 @@ async def generate_full_text(
         top_p=options.get("top_p", DEFAULT_TOP_P),
       ),
     )
-    processed = process_output(output_text)
+    processed = OUTPUT_PROCESSOR(output_text)
   print(f"[{t()}] Finished generation.")
   return processed
