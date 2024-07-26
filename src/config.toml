@@ -15,7 +15,7 @@ devmode = false
 
 [srv]
   host = "0.0.0.0"
-  port = 8080
+  port = 9190
   # IPs exempt from ratelimiting.
   ratelimit_exempt = [
     "192.168.0.0/16",
