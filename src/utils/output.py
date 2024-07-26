@@ -29,14 +29,15 @@ def process_smollm(output_text: str) -> dict:
       {"role":"assistant","content":"message"}
     ]
   }"""
-  matches: list[tuple[str,str]] = SMOLLM_PATTERN.findall(output_text)
+  matches: list[str] = SMOLLM_PATTERN.findall(output_text)
   if not matches:
     raise Exception("No output data found!")
 
   conversation = []
   for match in matches:
-    role = match[0].strip()
-    content = match[1].strip("\n ")
+    split = match.split("\n")
+    role = split.pop(0)
+    content = "\n".join(split)
     conversation.append({"role": role, "content": content})
 
   response = conversation[-1]["content"]
@@ -59,16 +60,14 @@ def process_tinyllama(output_text: str) -> dict:
       {"role":"assistant","content":"message"}
     ]
   }"""
-  matches: list[str] = TINYLLAMA_PATTERN.findall(output_text)
+  matches: list[tuple[str,str]] = TINYLLAMA_PATTERN.findall(output_text)
   if not matches:
     raise Exception("No output data found!")
 
   conversation = []
   for match in matches:
-    split = match.split("\n")
-    role = match.group(1)
-    role = role.strip(" <|>")
-    content = ("\n".join(split)).strip()
+    role = match[0].strip()
+    content = match[1].strip("\n ")
     conversation.append({"role": role, "content": content})
 
   response = conversation[-1]["content"]
