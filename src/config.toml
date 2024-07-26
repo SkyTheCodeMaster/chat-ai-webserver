@@ -9,6 +9,9 @@ devmode = false
   # Comes from huggingface
   model = "HuggingFaceTB/SmolLM-1.7B-Instruct"
   device = "cuda"
+  temp = 0.4
+  top_p = 0.92
+  starting_prompt = "You are a helpful assistant, with a focus on talking to people about relevant topics in the conversation."
 
 [log]
   file = ""

@@ -22,6 +22,10 @@ MODEL_ID = config["ai"]["model"]
 DEVICE = config["ai"]["device"]
 MODEL_LOCK = asyncio.Lock()
 
+DEFAULT_TEMP = 0.4
+DEFAULT_TOP_P = 0.92
+DEFAULT_START_PROMPT = "You are a helpful assistant, with a focus on talking to people about relevant topics in the conversation."
+
 
 if not torch.cuda.is_available() and "cuda" in DEVICE:
   raise Exception("Cuda is not available for model inference!")
@@ -49,8 +53,8 @@ def generate_text(
   _conversation: list[dict[str, str]],
   *,
   max_new_tokens: int = 500,
-  temperature: float = 0.6,
-  top_p: float = 0.92,
+  temperature: float = DEFAULT_TEMP,
+  top_p: float = DEFAULT_TOP_P,
   do_sample: bool = True,
 ) -> dict[str, str | list[dict[str, str]]]:
   conversation = setup_chat(_conversation)
@@ -119,8 +123,8 @@ async def generate_full_text(
       lambda: generate_text(
         conversation,
         max_new_tokens=options.get("max_new_tokens", 500),
-        temperature=options.get("temperature", 0.6),
-        top_p=options.get("top_p", 0.92),
+        temperature=options.get("temperature", DEFAULT_TEMP),
+        top_p=options.get("top_p", DEFAULT_TOP_P),
       ),
     )
     processed = process_output(output_text)

@@ -8,7 +8,7 @@ from aiohttp.web import Response
 from utils.authenticate import Approval, Key, authenticate, get_project_status
 from utils.cors import add_cors_routes
 from utils.limiter import Limiter
-from utils.chat import generate_full_text
+from utils.chat import generate_full_text, DEFAULT_TEMP, DEFAULT_TOP_P, DEFAULT_START_PROMPT
 
 if TYPE_CHECKING:
   from utils.authenticate import User
@@ -72,14 +72,14 @@ async def post_chat(request: Request) -> Response:
     body_options: dict[str,Any] = body["options"]
     options = {
       "max_tokens": body_options.get("max_tokens", 500),
-      "temperature": body_options.get("temperature", 0.6),
-      "top_p": body_options.get("top_p", 0.92)
+      "temperature": body_options.get("temperature", DEFAULT_TEMP),
+      "top_p": body_options.get("top_p", DEFAULT_TOP_P)
     }
   else:
     options = {
       "max_tokens": 500,
-      "temperature": 0.6,
-      "top_p": 0.92
+      "temperature": DEFAULT_TEMP,
+      "top_p": DEFAULT_TOP_P
     }
 
   if "conversation" in body:
@@ -88,7 +88,7 @@ async def post_chat(request: Request) -> Response:
     conversation = body["conversation"]
   else:
     conversation = [
-      {"role": "assistant", "content": "You are a friendly chatbot."}
+      {"role": "assistant", "content": DEFAULT_START_PROMPT}
     ]
   
   conversation.append({"role": "user", "content": prompt})
