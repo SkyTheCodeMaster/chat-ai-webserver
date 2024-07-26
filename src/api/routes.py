@@ -74,7 +74,7 @@ async def post_chat(request: Request) -> Response:
     conversation = body["conversation"]
   else:
     conversation = [
-      {"role": "system", "content": "You are a friendly chatbot."}
+      {"role": "assistant", "content": "You are a friendly chatbot."}
     ]
   
   conversation.append({"role": "user", "content": prompt})
