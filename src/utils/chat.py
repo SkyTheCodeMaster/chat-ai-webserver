@@ -8,6 +8,7 @@ import torch
 from typing import TYPE_CHECKING
 
 import time
+
 if TYPE_CHECKING:
   pass
 
@@ -47,7 +48,7 @@ def setup_chat(conversation: list[dict[str, str]]) -> list[dict[str, str]]:
 def generate_text(
   _conversation: list[dict[str, str]],
   *,
-  max_new_tokens: int = 100,
+  max_new_tokens: int = 500,
   temperature: float = 0.6,
   top_p: float = 0.92,
   do_sample: bool = True,
@@ -100,14 +101,28 @@ def process_output(output_text: str) -> dict:
   output_response = {"response": response, "conversation": conversation}
   return output_response
 
-async def generate_full_text(conversation: list[dict[str, str]]) -> dict:
+
+async def generate_full_text(
+  conversation: list[dict[str, str]], options: dict
+) -> dict:
   loop = asyncio.get_running_loop()
   start = time.time()
-  def t(): return round(time.time()-start, 4)
+
+  def t():
+    return round(time.time() - start, 4)
+
   print(f"[{t()}] Waiting for lock...")
   async with MODEL_LOCK:
     print(f"[{t()}] Lock acquired, generating text...")
-    output_text = await loop.run_in_executor(None, generate_text, conversation)
+    output_text = await loop.run_in_executor(
+      None,
+      lambda: generate_text(
+        conversation,
+        max_new_tokens=options.get("max_new_tokens", 500),
+        temperature=options.get("temperature", 0.6),
+        top_p=options.get("top_p", 0.92),
+      ),
+    )
     processed = process_output(output_text)
   print(f"[{t()}] Finished generation.")
   return processed

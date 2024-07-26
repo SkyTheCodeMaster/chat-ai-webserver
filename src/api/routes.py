@@ -13,6 +13,7 @@ from utils.chat import generate_full_text
 if TYPE_CHECKING:
   from utils.authenticate import User
   from utils.extra_request import Request
+  from typing import Any
 
 with open("config.toml") as f:
   config = tomllib.loads(f.read())
@@ -67,6 +68,19 @@ async def post_chat(request: Request) -> Response:
     return Response(status=400, text="pass prompt in body!")
     
   prompt = body["prompt"]
+  if "options" in body:
+    body_options: dict[str,Any] = body["options"]
+    options = {
+      "max_tokens": body_options.get("max_tokens", 500),
+      "temperature": body_options.get("temperature", 0.6),
+      "top_p": body_options.get("top_p", 0.92)
+    }
+  else:
+    options = {
+      "max_tokens": 500,
+      "temperature": 0.6,
+      "top_p": 0.92
+    }
 
   if "conversation" in body:
     # This is preceeding conversation, the user's new prompt
@@ -80,7 +94,7 @@ async def post_chat(request: Request) -> Response:
   conversation.append({"role": "user", "content": prompt})
 
   try:
-    response = await generate_full_text(conversation)
+    response = await generate_full_text(conversation, options)
   except Exception as e:
     return Response(status=500, text=str(e))
   
