@@ -5,13 +5,11 @@ from typing import TYPE_CHECKING
 
 from aiohttp import web
 from aiohttp.web import Response
-from utils.authenticate import Approval, Key, authenticate, get_project_status
 from utils.cors import add_cors_routes
 from utils.limiter import Limiter
 from utils.chat import generate_full_text, DEFAULT_TEMP, DEFAULT_TOP_P, DEFAULT_START_PROMPT
 
 if TYPE_CHECKING:
-  from utils.authenticate import User
   from utils.extra_request import Request
   from typing import Any
 
@@ -21,7 +19,7 @@ with open("config.toml") as f:
   exempt_ips = config["srv"]["ratelimit_exempt"]
   api_version = config["srv"]["api_version"]
 
-limiter = Limiter(exempt_ips=exempt_ips)
+limiter = Limiter(exempt_ips=exempt_ips, use_auth=False)
 routes = web.RouteTableDef()
 
 
@@ -45,24 +43,6 @@ async def get_lp_get(request: Request) -> Response:
 @routes.post("/chat/")
 @limiter.limit("6/m")
 async def post_chat(request: Request) -> Response:
-  auth = await authenticate(request, cs=request.session)
-
-  if isinstance(auth, Response):
-    return auth
-  else:
-    if isinstance(auth, Key):
-      # this means its a Key
-      user: User = auth.user
-    else:
-      user: User = auth
-
-    status = await get_project_status(user, "chat", cs=request.session)
-    if status != Approval.APPROVED:
-      return Response(
-        status=401,
-        text="please apply for project at https://auth.skystuff.cc/projects#chat",
-      )
-
   body = await request.json()
   if "prompt" not in body:
     return Response(status=400, text="pass prompt in body!")
@@ -88,7 +68,7 @@ async def post_chat(request: Request) -> Response:
     conversation = body["conversation"]
   else:
     conversation = [
-      {"role": "assistant", "content": DEFAULT_START_PROMPT}
+      {"role": "system", "content": DEFAULT_START_PROMPT}
     ]
   
   conversation.append({"role": "user", "content": prompt})

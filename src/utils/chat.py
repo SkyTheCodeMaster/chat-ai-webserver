@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import gc
+import time
 import tomllib
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
 from typing import TYPE_CHECKING
 
-import time
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
 from .output import get_processor
 
 if TYPE_CHECKING:
@@ -73,9 +75,6 @@ def generate_text(
   return output_text
 
 
-
-
-
 async def generate_full_text(
   conversation: list[dict[str, str]], options: dict
 ) -> dict:
@@ -98,5 +97,12 @@ async def generate_full_text(
       ),
     )
     processed = OUTPUT_PROCESSOR(output_text)
+  cleanup()
   print(f"[{t()}] Finished generation.")
   return processed
+
+
+def cleanup():
+  torch.cuda.empty_cache()
+  torch.cuda.ipc_collect()
+  gc.collect()
